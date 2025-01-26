@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Login with Google</title>
+	<!-- Centered viewport -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.10.2/dist/cdn.min.js" defer></script>
+	<!-- Load Firebase SDKs -->
+	<script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app-compat.js"></script>
+	<script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-auth-compat.js"></script>
+</head>
+
+<body>
+	<main>
+		<article x-data="googleAuth()">
+			<header>
+				<hgroup>
+					<h3>Get Google Token Authentication</h3>
+					<p>Please Fill all the configuration needed to initialize Firebase! The configuration will be saved
+						in your localstorage.</p>
+				</hgroup>
+			</header>
+			<details>
+				<summary>Configuration</summary>
+				<p>Configure once, and use it forever.</p>
+				<form>
+					<input type="text" x-model="firebaseConfig.apiKey" placeholder="apiKey">
+					<small>apiKey</small>
+					<input type="text" x-model="firebaseConfig.authDomain" placeholder="authDomain">
+					<small>authDomain</small>
+					<input type="text" x-model="firebaseConfig.projectId" placeholder="projectId">
+					<small>projectId</small>
+					<input type="text" x-model="firebaseConfig.storageBucket" placeholder="storageBucket">
+					<small>storageBucket</small>
+					<input type="text" x-model="firebaseConfig.messagingSenderId" placeholder="messagingSenderId">
+					<small>messagingSenderId</small>
+					<input type="text" x-model="firebaseConfig.appId" placeholder="appId">
+					<small>appId</small>
+					<input type="text" x-model="firebaseConfig.measurementId" placeholder="measurementId">
+					<small>measurementId</small>
+				</form>
+			</details>
+			<blockquote x-show="token">
+				<p x-text="token"></p>
+				<footer>
+					<cite>— Your google token</cite>
+				</footer>
+			</blockquote>
+
+			<footer><button @click="login">Login with Google</button></footer>
+
+			<dialog x-show="isOpen" open x-transition>
+				<article>
+					<header>
+						<button rel="prev" @click="isOpen = ! isOpen"></button>
+						<h4>Success</h4>
+					</header>
+					<p>Token copied to clipboard! </p>
+					<footer>
+						<button @click="isOpen = ! isOpen">Close</button>
+					</footer>
+				</article>
+			</dialog>
+		</article>
+	</main>
+
+	<script>
+		function googleAuth() {
+			return {
+				firebaseConfig: JSON.parse(localStorage.getItem('firebaseConfig')) || {
+					apiKey: '',
+					authDomain: '',
+					projectId: '',
+					storageBucket: '',
+					messagingSenderId: '',
+					appId: '',
+					measurementId: '',
+				},
+				token: '',
+				isOpen: false,
+				initFirebase() {
+					if (firebase.apps.length === 0) {
+						console.log('Initializing Firebase...', this.firebaseConfig);
+						firebase.initializeApp(this.firebaseConfig);
+
+					}
+				},
+				saveConfig() {
+					localStorage.setItem('firebaseConfig', JSON.stringify(this.firebaseConfig));
+					this.initFirebase();
+				},
+				async login() {
+					this.saveConfig(); // Save and initialize Firebase
+					const auth = firebase.auth();
+					const provider = new firebase.auth.GoogleAuthProvider();
+
+					try {
+						const result = await auth.signInWithPopup(provider);
+						this.token = await result.user.getIdToken();
+
+						// Copy token to clipboard in a user-triggered action
+						this.copyToClipboard(this.token);
+
+						// Show success modal
+						this.isOpen = true;
+
+						console.log('Token:', this.token);
+					} catch (error) {
+						console.error('Login failed:', error);
+						alert('Login failed. Check the console for details.');
+					}
+				},
+				copyToClipboard(text) {
+					// Ensure the document is focused
+					document.addEventListener(
+						'click',
+						() => {
+							navigator.clipboard.writeText(text).then(() => {
+								console.log('Token copied to clipboard!');
+							});
+						},
+						{ once: true }
+					);
+				},
+			};
+		}
+	</script>
+</body>
+
+</html>
