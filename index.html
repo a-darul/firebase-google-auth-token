@@ -93,6 +93,10 @@
 					this.initFirebase();
 				},
 				async login() {
+					if (!this.firebaseConfig.apiKey || !this.firebaseConfig.authDomain || !this.firebaseConfig.projectId || !this.firebaseConfig.storageBucket || !this.firebaseConfig.messagingSenderId || !this.firebaseConfig.appId || !this.firebaseConfig.measurementId) {
+						alert('Please fill all the configuration needed to initialize Firebase!');
+						return;
+					}
 					this.saveConfig(); // Save and initialize Firebase
 					const auth = firebase.auth();
 					const provider = new firebase.auth.GoogleAuthProvider();
