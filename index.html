@@ -11,6 +11,7 @@
 	<!-- Load Firebase SDKs -->
 	<script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app-compat.js"></script>
 	<script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-auth-compat.js"></script>
+	<link rel="stylesheet" href="styles.css">
 </head>
 
 <body>
@@ -27,30 +28,45 @@
 				<summary>Configuration</summary>
 				<p>Configure once, and use it forever.</p>
 				<form>
-					<input type="text" x-model="firebaseConfig.apiKey" placeholder="apiKey">
 					<small>apiKey</small>
-					<input type="text" x-model="firebaseConfig.authDomain" placeholder="authDomain">
+					<input type="text" x-model="firebaseConfig.apiKey" placeholder="apiKey">
 					<small>authDomain</small>
-					<input type="text" x-model="firebaseConfig.projectId" placeholder="projectId">
+					<input type="text" x-model="firebaseConfig.authDomain" placeholder="authDomain">
 					<small>projectId</small>
-					<input type="text" x-model="firebaseConfig.storageBucket" placeholder="storageBucket">
+					<input type="text" x-model="firebaseConfig.projectId" placeholder="projectId">
 					<small>storageBucket</small>
-					<input type="text" x-model="firebaseConfig.messagingSenderId" placeholder="messagingSenderId">
+					<input type="text" x-model="firebaseConfig.storageBucket" placeholder="storageBucket">
 					<small>messagingSenderId</small>
-					<input type="text" x-model="firebaseConfig.appId" placeholder="appId">
+					<input type="text" x-model="firebaseConfig.messagingSenderId" placeholder="messagingSenderId">
 					<small>appId</small>
-					<input type="text" x-model="firebaseConfig.measurementId" placeholder="measurementId">
+					<input type="text" x-model="firebaseConfig.appId" placeholder="appId">
 					<small>measurementId</small>
+					<input type="text" x-model="firebaseConfig.measurementId" placeholder="measurementId">
 				</form>
 			</details>
-			<blockquote x-show="token">
-				<p x-text="token"></p>
-				<footer>
-					<cite>— Your google token</cite>
-				</footer>
-			</blockquote>
+			<hgroup x-show="token">
+				<button @click="copyToClipboard(token); isOpen = !isOpen" style="float: right;">Copy the token <svg
+						xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+						fill="#F3F3F3">
+						<path
+							d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h440v80H200Zm160-240v-480 480Z" />
+					</svg></button>
+				<blockquote>
+					<p x-text="token"></p>
+					<footer>
+						<cite>— Your google token</cite>
+					</footer>
+				</blockquote>
+			</hgroup>
 
-			<footer><button @click="login">Login with Google</button></footer>
+			<footer>
+				<button @click="login('google')">Login with Google</button>
+				<button @click="login('anonym')">Login Anonymously <svg xmlns="http://www.w3.org/2000/svg" height="24px"
+						viewBox="0 -960 960 960" width="24px" fill="#FFFFFF">
+						<path
+							d="M312-240q-51 0-97.5-18T131-311q-48-45-69.5-106.5T40-545q0-78 38-126.5T189-720q14 0 26.5 2.5T241-710l239 89 239-89q13-5 25.5-7.5T771-720q73 0 111 48.5T920-545q0 66-21.5 127.5T829-311q-37 35-83.5 53T648-240q-66 0-112-30l-46-30h-20l-46 30q-46 30-112 30Zm0-80q37 0 69-17.5t59-42.5h80q27 25 59 42.5t69 17.5q36 0 69.5-12.5T777-371q34-34 48.5-80t14.5-94q0-41-17-68.5T769-640q-3 0-22 4L480-536 213-636q-5-2-10.5-3t-11.5-1q-37 0-54 27t-17 68q0 49 14.5 95t49.5 80q26 25 59 37.5t69 12.5Zm49-60q37 0 58-16.5t21-45.5q0-49-64.5-93.5T239-580q-37 0-58 16.5T160-518q0 49 64.5 93.5T361-380Zm-6-60q-38 0-82.5-25T220-516q5-2 11.5-3.5T245-521q38 0 82.5 25.5T380-444q-5 2-11.5 3t-13.5 1Zm244 61q72 0 136.5-45t64.5-94q0-29-20.5-46T721-581q-72 0-136.5 45T520-442q0 29 21 46t58 17Zm6-61q-7 0-13-1t-11-3q8-26 52.5-51t82.5-25q7 0 13 1t11 3q-8 26-52.5 51T605-440Zm-125-40Z" />
+					</svg></button>
+			</footer>
 
 			<dialog x-show="isOpen" open x-transition>
 				<article>
@@ -92,17 +108,24 @@
 					localStorage.setItem('firebaseConfig', JSON.stringify(this.firebaseConfig));
 					this.initFirebase();
 				},
-				async login() {
-					if (!this.firebaseConfig.apiKey || !this.firebaseConfig.authDomain || !this.firebaseConfig.projectId || !this.firebaseConfig.storageBucket || !this.firebaseConfig.messagingSenderId || !this.firebaseConfig.appId || !this.firebaseConfig.measurementId) {
+				async login(logInType) {
+					if (Object.values(this.firebaseConfig).some(value => !value)) {
 						alert('Please fill all the configuration needed to initialize Firebase!');
 						return;
 					}
 					this.saveConfig(); // Save and initialize Firebase
 					const auth = firebase.auth();
-					const provider = new firebase.auth.GoogleAuthProvider();
-
 					try {
-						const result = await auth.signInWithPopup(provider);
+						let result;
+
+						if (logInType === 'anonym') {
+							result = await auth.signInAnonymously();
+						}
+						if (logInType === 'google') {
+							const provider = new firebase.auth.GoogleAuthProvider();
+							result = await auth.signInWithPopup(provider);
+						}
+
 						this.token = await result.user.getIdToken();
 
 						// Copy token to clipboard in a user-triggered action
@@ -118,16 +141,13 @@
 					}
 				},
 				copyToClipboard(text) {
-					// Ensure the document is focused
-					document.addEventListener(
-						'click',
-						() => {
-							navigator.clipboard.writeText(text).then(() => {
-								console.log('Token copied to clipboard!');
-							});
-						},
-						{ once: true }
-					);
+					navigator.clipboard.writeText(text)
+						.then(() => {
+							console.log('Token copied to clipboard!');
+						})
+						.catch(err => {
+							console.error('Failed to copy: ', err);
+						});
 				},
 			};
 		}
