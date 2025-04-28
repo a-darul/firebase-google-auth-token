@@ -45,7 +45,7 @@
 				</form>
 			</details>
 			<hgroup x-show="token">
-				<button @click="copyToClipboard(token); isOpen = !isOpen" style="float: right;">Copy the token <svg
+				<button @click="realCopyToClipboard(token); isOpen = !isOpen" style="float: right;">Copy the token <svg
 						xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
 						fill="#F3F3F3">
 						<path
@@ -141,6 +141,16 @@
 					}
 				},
 				copyToClipboard(text) {
+					// Ensure the document is focused
+					document.addEventListener(
+						'click',
+						() => {
+							this.realCopyToClipboard(text);
+						},
+						{ once: true }
+					);
+				},
+				realCopyToClipboard(text) {
 					navigator.clipboard.writeText(text)
 						.then(() => {
 							console.log('Token copied to clipboard!');
